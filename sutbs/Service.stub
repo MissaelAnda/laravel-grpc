@@ -1,0 +1,15 @@
+<?php
+
+namespace App\Grpc\Services;
+
+use MissaelAnda\Grpc\BaseService;
+
+class {{ class }} extends BaseService implements {{ Service }}
+{
+    public function __construct()
+    {
+        // register interceptors
+    }
+
+    {{ methods }}
+}

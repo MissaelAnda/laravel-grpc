@@ -1,0 +1,45 @@
+#!/usr/bin/env php
+<?php
+
+use Illuminate\Contracts\Foundation\Application;
+use MissaelAnda\Grpc\Server\ServerServiceProvider;
+use MissaelAnda\Grpc\Services\ServicesRegistry;
+use Spiral\RoadRunner\GRPC\InvokerInterface;
+use Spiral\RoadRunner\GRPC\Server;
+
+$basePath = require __DIR__ . '/bootstrap.php';
+
+if (!is_file($bootstrap = $basePath . '/bootstrap/app.php')) {
+    writeError('Missing bootstrap file!');
+
+    exit(12);
+}
+
+/** @var Application */
+$app = require $bootstrap;
+
+$app->bootstrapWith([
+    \Illuminate\Foundation\Bootstrap\LoadEnvironmentVariables::class,
+    \Illuminate\Foundation\Bootstrap\LoadConfiguration::class,
+    \Illuminate\Foundation\Bootstrap\HandleExceptions::class,
+    \Illuminate\Foundation\Bootstrap\RegisterFacades::class,
+    \Illuminate\Foundation\Bootstrap\SetRequestForConsole::class,
+    \MissaelAnda\Grpc\Server\SetInitialContext::class,
+    \Illuminate\Foundation\Bootstrap\RegisterProviders::class,
+    \Illuminate\Foundation\Bootstrap\BootProviders::class,
+]);
+
+$app->register(ServerServiceProvider::class);
+
+/** @var InvokerInterface */
+$invoker = $app->make(InvokerInterface::class);
+/** @var ServicesRegistry */
+$services = $app->make(ServicesRegistry::class);
+
+$server = new Server($invoker, [
+    'debug' => $app->make('config')->get('grpc.server.debug'),
+]);
+
+$services->loadServices()->registerServices($server);
+
+$server->serve();
